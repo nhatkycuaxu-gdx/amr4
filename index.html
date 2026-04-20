@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>AMR4 Reader - Hệ Thống Giải Mã Mật Tin</title>
+    <style>
+        :root { --primary: #00ff41; --bg: #0d1117; }
+        body { background-color: var(--bg); color: #c9d1d9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; border: 1px solid #30363d; padding: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h1 { color: var(--primary); text-align: center; border-bottom: 2px solid var(--primary); padding-bottom: 10px; font-family: 'Courier New', Courier, monospace; }
+        .upload-section { text-align: center; margin-bottom: 30px; padding: 20px; border: 2px dashed #30363d; }
+        #fileInput { display: none; }
+        .btn { background: var(--primary); color: black; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .section { margin-top: 25px; display: none; background: #161b22; padding: 15px; border-radius: 5px; border-left: 4px solid var(--primary); }
+        .section h2 { color: var(--primary); font-size: 1.2em; margin-top: 0; }
+        #textContent { white-space: pre-wrap; color: #e6edf3; font-size: 1.1em; }
+        img, video { max-width: 100%; border-radius: 5px; margin-top: 10px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 0.8em; color: #8b949e; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AMR4 DECODER : QD ND VN</h1>
+    
+    <div class="upload-section">
+        <p>Hệ thống sẵn sàng. Vui lòng nạp tệp tin mật (.amr4 / .bin)</p>
+        <input type="file" id="fileInput" onchange="processFile()">
+        <button class="btn" onclick="document.getElementById('fileInput').click()">CHỌN FILE MẬT</button>
+    </div>
+
+    <div id="status" style="text-align:center; color: var(--primary); display:none;">Đang giải mã...</div>
+
+    <div id="v_text" class="section">
+        <h2>📜 BẢN THẢO (TRUYỀN TIN MẬT)</h2>
+        <div id="textContent"></div>
+    </div>
+
+    <div id="v_img" class="section">
+        <h2>🖼️ HÌNH ẢNH HỆ THỐNG</h2>
+        <div id="imgContainer"></div>
+    </div>
+
+    <div id="v_audio" class="section">
+        <h2>🎵 LUỒNG ÂM THANH (RAW BINARY)</h2>
+        <audio id="audioPlayer" controls style="width:100%"></audio>
+    </div>
+
+    <div id="v_video" class="section">
+        <h2>🎥 VIDEO BẢO MẬT (ENCRYPTED)</h2>
+        <p style="font-size: 0.9em; color: #8b949e;">Lưu ý: Hệ thống đang trỏ tới tệp nguồn: <span id="videoPath"></span></p>
+    </div>
+
+    <div class="footer">
+        Định dạng AMR4 độc quyền của Hạo Thiên - Bảo mật đa tầng ngôn ngữ
+    </div>
+</div>
+
+<script>
+    function processFile() {
+        const file = document.getElementById('fileInput').files[0];
+        if (!file) return;
+
+        document.getElementById('status').style.display = 'block';
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const content = e.target.result;
+            
+            // 1. Giải mã Văn bản (Bóc tách CDATA)
+            const cdataMatch = content.match(/<!\[CDATA\[([\s\S]*?)\]\]>/);
+            if (cdataMatch) {
+                document.getElementById('v_text').style.display = 'block';
+                document.getElementById('textContent').innerText = cdataMatch[1].trim();
+            }
+
+            // 2. Giải mã Hình ảnh (Bóc tách Base64)
+            const imgMatch = content.match(/<img src="data:image\/(.*?);base64,([\s\S]*?)"/);
+            if (imgMatch) {
+                document.getElementById('v_img').style.display = 'block';
+                const img = document.createElement('img');
+                img.src = `data:image/${imgMatch[1]};base64,${imgMatch[2].replace(/\s/g, '')}`;
+                document.getElementById('imgContainer').innerHTML = '';
+                document.getElementById('imgContainer').appendChild(img);
+            }
+
+            // 3. Nhận diện luồng Âm thanh
+            const audioMatch = content.match(/<binary_stream src="(.*?)"/);
+            if (audioMatch) {
+                document.getElementById('v_audio').style.display = 'block';
+                document.getElementById('audioPlayer').src = audioMatch[1];
+            }
+
+            // 4. Nhận diện đường dẫn Video mật
+            const videoMatch = content.match(/<data_source src="(.*?)"/);
+            if (videoMatch) {
+                document.getElementById('v_video').style.display = 'block';
+                document.getElementById('videoPath').innerText = videoMatch[1];
+            }
+
+            document.getElementById('status').innerText = 'GIẢI MÃ HOÀN TẤT!';
+        };
+
+        reader.readAsText(file);
+    }
+</script>
+
+</body>
+</html>
