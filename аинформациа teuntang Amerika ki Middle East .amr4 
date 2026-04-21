@@ -44,8 +44,7 @@ Việt Nam - Tổng bí thư cần quá lo lắng
     
     <binary_stream src="b_n_h_ng_tre_ng.mp3" mode="raw_direct" />
 </amr4_driver_logic>
-
-    
+   
 <amr4_video_secure type="encrypted/java" id="vid_amr4mp3">
     <data_source src="base64.txt" type="java/external" />
 </amr4_video_secure>
